@@ -18,6 +18,10 @@ jobs:
     
     - name: Install dependencies
       run: pip install pandas openpyxl pytz
+
+    - name: Fetch JSON real desde Cuadrado  ← ← ← NUEVO PASO AQUÍ
+      run: |
+        curl -s "https://cuadrado.com.ar/api/arribos?linea=141&parada=LP1912" > input.json
     
     - name: Crear data/
       run: mkdir -p data
