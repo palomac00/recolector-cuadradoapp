@@ -1,4 +1,4 @@
-HORARIOS LÍNEA 141 - 09/01 21:47
+HORARIOS LÍNEA 141 - 09/01 22:00
 ============================================================
 
 🚐 215A/B/C (TUS FAVORITOS)
@@ -16,6 +16,7 @@ HORARIOS LÍNEA 141 - 09/01 21:47
 ----------------------------------------
  18:30 11X44_ETCHEVERRY          🚌   0min
  18:47 14X44_ABASTO              🚌   0min
+ 19:00 11_ETCHEVERRY             🚌   0min
  18:31 15_ABASTO                 🚌   1min
  18:35 23_HERNANDEZ              🚌   5min
  18:40 14_ABASTO                 📅  10min
@@ -28,6 +29,7 @@ HORARIOS LÍNEA 141 - 09/01 21:47
  19:10 14_ABASTO                 🚌  27min
  18:58 215A_EL PATO              📅  28min
  19:12 215B_LP-P MOR-1 Y 57      🚌  29min
+ 19:30 16_SANTA ANA              🚌  30min
  19:01 16_SANTA ANA              🚌  31min
  19:16 15_ABASTO                 🚌  33min
  19:16 27_EL RETIRO              📅  33min
@@ -44,8 +46,10 @@ HORARIOS LÍNEA 141 - 09/01 21:47
  19:21 26_HERNANDEZ              🚌  51min
  19:34 23_HERNANDEZ              🚌  51min
  19:30 225_GOMEZ                 📅  60min
+ 20:09 15_ABASTO                 🚌  69min
  19:40 14_ABASTO                 🚌  70min
  19:40 215C_EL PATO              🚌  70min
+ 20:10 10_OLMOS                  🚌  70min
  19:50 11X44_ETCHEVERRY          🚌  80min
  19:50 16_P MOR-SANTA ANA        🚌  80min
  19:51 81_EL PELIGRO             🚌  81min
@@ -57,3 +61,4 @@ HORARIOS LÍNEA 141 - 09/01 21:47
  20:22 11_ETCHEVERRY             🚌 112min
  20:23 215A_EL PATO              🚌 113min
  20:39 215A_LA PLATA             📅 116min
+ 20:56 27_EL RETIRO              🚌 116min
