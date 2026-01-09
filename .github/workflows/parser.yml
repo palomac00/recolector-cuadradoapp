@@ -1,49 +1,77 @@
-name: 🧮 Parser JSON 141
+name: Recolector Línea 141 (3 paradas)
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Cada 10min
-  workflow_dispatch:
+    - cron: '*/10 * * * *'  # Cada 10 minutos
+  workflow_dispatch:        # Botón manual
 
 jobs:
   parse:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    
-    - name: Install dependencies
-      run: pip install pandas openpyxl pytz
 
-    - name: Fetch JSON real desde Cuadrado  ← ← ← NUEVO PASO AQUÍ
+    - name: Install dependencies
       run: |
-        curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22LP1912%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > input.json
-    
+        python -m pip install --upgrade pip
+        pip install pandas openpyxl requests jq
+
     - name: Crear data/
       run: mkdir -p data
-    
-    - name: Crear JSON de prueba
-      run: |
-        cat > input.json << 'EOF'
-        {
-          "arribos": [
-            {"tiempo": 5, "bandera": "23_HERNANDEZ", "programado": false},
-            {"tiempo": 15, "bandera": "215B_EL PATO", "programado": true},
-            {"tiempo": 26, "bandera": "10_OLMOS", "programado": false}
-          ]
-        }
-        EOF
 
-    - name: Parsear JSON
+    - name: Fetch 3 paradas Cuadrado API
+      run: |
+        echo "📡 Descargando horarios reales..."
+        
+        # LP1912 (principal - ~28 buses)
+        curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22LP1912%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > lp1912.json
+        
+        # L6173 (secundaria - 2 buses 215)
+        curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22L6173%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > l6173.json
+        
+        # L6203 (tercera - 1 bus 215C)
+        curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22L6203%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > l6203.json
+        
+        # Combinar TODOS los JSONs
+        python -c "
+import json
+files = ['lp1912.json', 'l6173.json', 'l6203.json']
+all_arribos = []
+for f in files:
+    try:
+        data = json.load(open(f))
+        all_arribos.extend(data['arribos'])
+        print(f'✅ {f}: {len(data[\"arribos\"])} buses')
+    except:
+        print(f'⚠️  {f}: vacío')
+
+# Eliminar duplicados (mismo tiempo + bandera)
+unique = []
+seen = set()
+for a in sorted(all_arribos, key=lambda x: x['tiempo']):
+    key = (a['tiempo'], a['bandera'])
+    if key not in seen:
+        seen.add(key)
+        unique.append(a)
+
+combined = {'arribos': unique}
+json.dump(combined, open('input.json', 'w'), indent=2)
+print(f'✅ TOTAL: {len(unique)} horarios únicos de 3 paradas')
+"
+
+    - name: Parsear JSON → Excel + TXT
       run: python parse_json.py input.json
-    
+
     - name: Commit results
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
         commit_message: "📊 Arribos 141 actualizados - ${{ github.run_number }}"
-        file_pattern: 'data/*'
-        branch: main
+        file_pattern: data/*
