@@ -24,7 +24,8 @@ def parse_arribos(json_data):
         
         arrivals.append({
             'timestamp': now.strftime('%d/%m/%Y %H:%M:%S'),
-            'eta': eta.strftime('%H:%M'),
+            'hora_actual': now.strftime('%H:%M'),
+            'hora_eta': eta.strftime('%H:%M'),  # ← NUEVA
             'minutos_restantes': mins,
             'bandera': bandera,
             'programado': '📅' if prog else '',
