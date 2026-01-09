@@ -3,62 +3,60 @@ name: Recolector Línea 141 (3 paradas)
 on:
   schedule:
     - cron: '*/10 * * * *'  # Cada 10 minutos
-  workflow_dispatch:        # Botón manual
+  workflow_dispatch:  # Botón manual
 
 jobs:
   parse:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pandas openpyxl requests
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas openpyxl requests
 
-    - name: Crear data/
-      run: mkdir -p data
+      - name: Crear data/
+        run: mkdir -p data
 
-        - name: Fetch Cuadrado API data
-      run: |
-        curl -s "https://cuadradoapp.com/api/linea/1912/parada/3" > lp1912.json
-        curl -s "https://cuadradoapp.com/api/linea/6173/parada/3" > l6173.json  
-        curl -s "https://cuadradoapp.com/api/linea/6203/parada/3" > l6203.json
-        echo "✅ Downloaded $(wc -l < lp1912.json) + $(wc -l < l6173.json) + $(wc -l < l6203.json) lines"
+      - name: Fetch Cuadrado API data
+        run: |
+          curl -s "https://cuadradoapp.com/api/linea/1912/parada/3" > lp1912.json
+          curl -s "https://cuadradoapp.com/api/linea/6173/parada/3" > l6173.json
+          curl -s "https://cuadradoapp.com/api/linea/6203/parada/3" > l6203.json
+          echo '✅ Downloaded files successfully'
 
-    - name: Merge JSON files
-      run: |
-        cat > merge.py << 'EOF'
-        import json
-        files = ['lp1912.json', 'l6173.json', 'l6203.json']
-        all_arribos = []
-        for f in files:
-            try:
-                data = json.load(open(f))
-                all_arribos.extend(data['arribos'])
-            except:
-                pass
-        all_arribos.sort(key=lambda x: x['tiempo'])
-        json.dump({'arribos': all_arribos}, open('input.json', 'w'))
-        print(f"✅ {len(all_arribos)} horarios combinados")
-        EOF
-        python3 merge.py
+      - name: Merge JSON files
+        run: |
+          cat > merge.py << 'EOF'
+          import json
+          files = ['lp1912.json', 'l6173.json', 'l6203.json']
+          all_arribos = []
+          for f in files:
+              try:
+                  data = json.load(open(f))
+                  all_arribos.extend(data['arribos'])
+              except:
+                  pass
+          all_arribos.sort(key=lambda x: x['tiempo'])
+          json.dump({'arribos': all_arribos}, open('input.json', 'w'))
+          print(f"✅ {len(all_arribos)} horarios combinados")
+          EOF
+          python3 merge.py
 
+      - name: Parsear JSON → Excel + TXT
+        run: python parse_json.py input.json
 
-
-    - name: Parsear JSON → Excel + TXT
-      run: python parse_json.py input.json
-
-    - name: Commit results
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: "📊 Arribos 141 actualizados - ${{ github.run_number }}"
-        file_pattern: data/*
+      - name: Commit results
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: '📊 Arribos 141 actualizados - ${{ github.run_number }}'
+          file_pattern: data/*
