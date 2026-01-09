@@ -1,33 +1,13 @@
-name: 🧮 Parser JSON 141
-on:
-  schedule:
-    - cron: '*/10 * * * *'  # Cada 10min
-  workflow_dispatch:
+- name: Crear JSON de prueba
+  run: |
+    cat > input.json << 'EOF'
+    {
+      "arribos": [
+        {"tiempo": 5, "bandera": "23_HERNANDEZ", "programado": false},
+        {"tiempo": 15, "bandera": "215B_EL PATO", "programado": true}
+      ]
+    }
+    EOF
 
-jobs:
-  parse:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - run: pip install pandas openpyxl
-    
-    - name: Crear data/
-      run: mkdir -p data
-    
-    - name: Simular JSON (prueba)
-      run: |
-        echo '${{ github.event.inputs.json || '{}' }}' > input.json
-        
-    - name: Parsear JSON
-      run: python parse_json.py input.json
-    
-    - name: Commit
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: "📊 Arribos 141 actualizados"
-        file_pattern: 'data/*'
+- name: Parsear JSON
+  run: python parse_json.py input.json
