@@ -27,13 +27,16 @@ jobs:
     - name: Crear data/
       run: mkdir -p data
 
-    - name: Fetch 3 paradas Cuadrado API
+        - name: Fetch Cuadrado API data
       run: |
         curl -s "https://cuadradoapp.com/api/linea/1912/parada/3" > lp1912.json
         curl -s "https://cuadradoapp.com/api/linea/6173/parada/3" > l6173.json  
         curl -s "https://cuadradoapp.com/api/linea/6203/parada/3" > l6203.json
-        
-        python3 -c "
+        echo "✅ Downloaded $(wc -l < lp1912.json) + $(wc -l < l6173.json) + $(wc -l < l6203.json) lines"
+
+    - name: Merge JSON files
+      run: |
+        cat > merge.py << 'EOF'
         import json
         files = ['lp1912.json', 'l6173.json', 'l6203.json']
         all_arribos = []
@@ -41,11 +44,14 @@ jobs:
             try:
                 data = json.load(open(f))
                 all_arribos.extend(data['arribos'])
-            except: pass
+            except:
+                pass
         all_arribos.sort(key=lambda x: x['tiempo'])
         json.dump({'arribos': all_arribos}, open('input.json', 'w'))
-        print(f'✅ {len(all_arribos)} horarios combinados')
-        "
+        print(f"✅ {len(all_arribos)} horarios combinados")
+        EOF
+        python3 merge.py
+
 
 
     - name: Parsear JSON → Excel + TXT
