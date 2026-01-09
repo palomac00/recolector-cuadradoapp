@@ -1,13 +1,45 @@
-- name: Crear JSON de prueba
-  run: |
-    cat > input.json << 'EOF'
-    {
-      "arribos": [
-        {"tiempo": 5, "bandera": "23_HERNANDEZ", "programado": false},
-        {"tiempo": 15, "bandera": "215B_EL PATO", "programado": true}
-      ]
-    }
-    EOF
+name: 🧮 Parser JSON 141
 
-- name: Parsear JSON
-  run: python parse_json.py input.json
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Cada 10min
+  workflow_dispatch:
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: pip install pandas openpyxl pytz
+    
+    - name: Crear data/
+      run: mkdir -p data
+    
+    - name: Crear JSON de prueba
+      run: |
+        cat > input.json << 'EOF'
+        {
+          "arribos": [
+            {"tiempo": 5, "bandera": "23_HERNANDEZ", "programado": false},
+            {"tiempo": 15, "bandera": "215B_EL PATO", "programado": true},
+            {"tiempo": 26, "bandera": "10_OLMOS", "programado": false}
+          ]
+        }
+        EOF
+
+    - name: Parsear JSON
+      run: python parse_json.py input.json
+    
+    - name: Commit results
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "📊 Arribos 141 actualizados - ${{ github.run_number }}"
+        file_pattern: 'data/*'
+        branch: main
