@@ -2,7 +2,7 @@
 import sys
 import json
 import pandas as pd
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import pytz
 from pathlib import Path
 from openpyxl import Workbook
@@ -85,8 +85,7 @@ def create_excel_3_sheets(arrivals):
     format_sheet(ws3, df_combined)
     
     fecha = datetime.now().strftime("%Y-%m-%d")
-filename = f"data/horarios-141-{fecha}.xlsx"
-
+    filename = f"data/horarios-141-{fecha}.xlsx"
     wb.save(filename)
     print(f"✅ Excel guardado: {filename} ({len(arrivals)} buses)")
 
@@ -94,6 +93,7 @@ def create_txt(arrivals):
     """TXT legible para Notion/sync"""
     Path("data").mkdir(exist_ok=True)
     fecha = datetime.now().strftime("%Y-%m-%d")
+    
     with open(f"data/horarios-141-{fecha}.txt", "w", encoding="utf-8") as f:
         f.write(f"HORARIOS LÍNEA 141 - {datetime.now().strftime('%d/%m %H:%M')}\n")
         f.write("=" * 60 + "\n\n")
@@ -113,8 +113,7 @@ def create_txt(arrivals):
         for bus in sorted(arrivals, key=lambda x: x['minutos_restantes']):
             f.write(f"{bus['hora_eta']:>6} {bus['bandera']:<25} {bus['status']} {bus['minutos_restantes']:>3}min\n")
     
-    print(f"✅ TXT guardado: data/horarios-141-{fecha}.txt")  # ← Línea corregida
-
+    print(f"✅ TXT guardado: data/horarios-141-{fecha}.txt")
 
 def main():
     if len(sys.argv) != 2:
