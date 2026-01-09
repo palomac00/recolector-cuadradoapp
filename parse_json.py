@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import pytz
 from pathlib import Path
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill
 
 def parse_arrivals(json_file):
@@ -36,11 +36,37 @@ def parse_arrivals(json_file):
     
     return arrivals
 
-def create_excel_3_sheets(arrivals):
+def load_existing_arrivals(filename):
+    """Cargar arrivals existentes del Excel"""
+    try:
+        df = pd.read_excel(filename)
+        return df.to_dict('records')
+    except FileNotFoundError:
+        return []
+
+def merge_arrivals(new_arrivals, existing_arrivals):
+    """Combinar arrivals nuevos con existentes, evitando duplicados"""
+    # Crear set de identificadores únicos para evitar duplicados
+    existing_keys = set()
+    for arr in existing_arrivals:
+        key = (arr['hora_eta'], arr['bandera'])
+        existing_keys.add(key)
+    
+    merged = existing_arrivals.copy()
+    for arr in new_arrivals:
+        key = (arr['hora_eta'], arr['bandera'])
+        if key not in existing_keys:
+            merged.append(arr)
+    
+    # Ordenar por minutos restantes
+    merged.sort(key=lambda x: x['minutos_restantes'])
+    return merged
+
+def create_excel_3_sheets(arrivals, filename):
     """Crear Excel con 3 hojas"""
     Path("data").mkdir(exist_ok=True)
     wb = Workbook()
-    wb.remove(wb.active)  # Remove default sheet
+    wb.remove(wb.active)
     
     # Headers
     headers = ["ETA", "BANDERA", "MIN", "ESTADO"]
@@ -84,17 +110,14 @@ def create_excel_3_sheets(arrivals):
     df_combined = pd.DataFrame(arrivals).sort_values('minutos_restantes')
     format_sheet(ws3, df_combined)
     
-    fecha = datetime.now().strftime("%Y-%m-%d")
-    filename = f"data/horarios-141-{fecha}.xlsx"
     wb.save(filename)
-    print(f"✅ Excel guardado: {filename} ({len(arrivals)} buses)")
+    print(f"✅ Excel guardado: {filename} ({len(arrivals)} buses acumulados)")
 
 def create_txt(arrivals):
     """TXT legible para Notion/sync"""
     Path("data").mkdir(exist_ok=True)
-    fecha = datetime.now().strftime("%Y-%m-%d")
     
-    with open(f"data/horarios-141-{fecha}.txt", "w", encoding="utf-8") as f:
+    with open("data/horarios-141.txt", "w", encoding="utf-8") as f:
         f.write(f"HORARIOS LÍNEA 141 - {datetime.now().strftime('%d/%m %H:%M')}\n")
         f.write("=" * 60 + "\n\n")
         
@@ -113,7 +136,7 @@ def create_txt(arrivals):
         for bus in sorted(arrivals, key=lambda x: x['minutos_restantes']):
             f.write(f"{bus['hora_eta']:>6} {bus['bandera']:<25} {bus['status']} {bus['minutos_restantes']:>3}min\n")
     
-    print(f"✅ TXT guardado: data/horarios-141-{fecha}.txt")
+    print("✅ TXT guardado: data/horarios-141.txt")
 
 def main():
     if len(sys.argv) != 2:
@@ -121,15 +144,27 @@ def main():
         sys.exit(1)
     
     json_file = sys.argv[1]
-    arrivals = parse_arrivals(json_file)
+    new_arrivals = parse_arrivals(json_file)
     
-    print(f"📊 {len(arrivals)} horarios parseados")
-    print(f"🚐 {len([a for a in arrivals if '215' in a['bandera']])} buses 215 encontrados")
+    # Generar nombre del archivo del día
+    fecha = datetime.now(pytz.timezone('America/Argentina/Buenos_Aires')).strftime("%Y-%m-%d")
+    excel_filename = f"data/horarios-141-{fecha}.xlsx"
     
-    create_excel_3_sheets(arrivals)
-    create_txt(arrivals)
+    # Cargar arrivals existentes del día
+    existing_arrivals = load_existing_arrivals(excel_filename)
     
-    print("🎉 Recolector COMPLETO: Excel(3 hojas) + TXT cada 10min")
+    # Combinar sin duplicados
+    all_arrivals = merge_arrivals(new_arrivals, existing_arrivals)
+    
+    print(f"📊 {len(new_arrivals)} horarios nuevos parseados")
+    print(f"📊 {len(existing_arrivals)} horarios anteriores")
+    print(f"📊 {len(all_arrivals)} horarios totales (sin duplicados)")
+    print(f"🚐 {len([a for a in all_arrivals if '215' in a['bandera']])} buses 215 encontrados")
+    
+    create_excel_3_sheets(all_arrivals, excel_filename)
+    create_txt(all_arrivals)
+    
+    print("🎉 Recolector COMPLETO: Excel acumulativo + TXT cada 10min")
 
 if __name__ == "__main__":
     main()
