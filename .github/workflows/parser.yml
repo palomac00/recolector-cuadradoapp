@@ -29,24 +29,24 @@ jobs:
 
     - name: Fetch 3 paradas Cuadrado API
       run: |
-        echo "📡 Descargando horarios reales..."
-        curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22LP1912%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > lp1912.json
-        curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22L6173%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > l6173.json
-        curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22L6203%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > l6203.json
+        curl -s "https://cuadradoapp.com/api/linea/1912/parada/3" > lp1912.json
+        curl -s "https://cuadradoapp.com/api/linea/6173/parada/3" > l6173.json  
+        curl -s "https://cuadradoapp.com/api/linea/6203/parada/3" > l6203.json
         
-        python -c "
-import json
-files = ['lp1912.json', 'l6173.json', 'l6203.json']
-all_arribos = []
-for f in files:
-    try:
-        data = json.load(open(f))
-        all_arribos.extend(data['arribos'])
-    except: pass
-all_arribos.sort(key=lambda x: x['tiempo'])
-json.dump({'arribos': all_arribos}, open('input.json', 'w'))
-print(f'✅ {len(all_arribos)} horarios combinados')
-"
+        python3 -c "
+        import json
+        files = ['lp1912.json', 'l6173.json', 'l6203.json']
+        all_arribos = []
+        for f in files:
+            try:
+                data = json.load(open(f))
+                all_arribos.extend(data['arribos'])
+            except: pass
+        all_arribos.sort(key=lambda x: x['tiempo'])
+        json.dump({'arribos': all_arribos}, open('input.json', 'w'))
+        print(f'✅ {len(all_arribos)} horarios combinados')
+        "
+
 
     - name: Parsear JSON → Excel + TXT
       run: python parse_json.py input.json
