@@ -1,44 +1,42 @@
-HORARIOS LÍNEA 141 - 09/01 19:34
+HORARIOS LÍNEA 141 - 09/01 19:48
 ============================================================
 
 🚐 215A/B/C (TUS FAVORITOS)
 ----------------------------------------
- 16:52 215B_LP-P MOR-40 Y 115    🚌  18min
- 17:04 215A_EL PATO              📅  30min
- 17:13 215A_LA PLATA             🚌  39min
- 17:39 215B_EL PATO              📅  65min
- 18:03 215C_LA PLATA             🚌  89min
- 18:27 215C_EL PATO              🚌 113min
+ 16:49 215B_LP-P MOR-40 Y 115    🚌   1min
+ 17:04 215A_EL PATO              🚌  16min
+ 17:14 215A_LA PLATA             🚌  26min
+ 17:40 215B_EL PATO              📅  52min
+ 18:03 215C_LA PLATA             🚌  75min
+ 18:27 215C_EL PATO              🚌  99min
 
 📋 TODOS LOS BUSES (orden ETA)
 ----------------------------------------
- 16:35 16_SANTA ANA              🚌   1min
- 16:35 16_SANTA ANA              🚌   1min
- 16:39 17_ROMERO                 📅   5min
- 16:42 16_P MOR-SANTA ANA        🚌   8min
- 16:42 225_GOMEZ                 📅   8min
- 16:48 15_ABASTO                 🚌  14min
- 16:50 14_ABASTO                 🚌  16min
- 16:51 23_HERNANDEZ              🚌  17min
- 16:52 215B_LP-P MOR-40 Y 115    🚌  18min
- 16:56 10_OLMOS                  🚌  22min
- 16:56 17_179 Y 38               🚌  22min
- 17:04 11_ETCHEVERRY             🚌  30min
- 17:04 215A_EL PATO              📅  30min
- 17:04 23_HERNANDEZ              🚌  30min
- 17:09 10_OLMOS                  🚌  35min
- 17:13 215A_LA PLATA             🚌  39min
- 17:16 11_ETCHEVERRY             🚌  42min
- 17:20 26_HERNANDEZ              🚌  46min
- 17:28 14_ABASTO                 🚌  54min
- 17:33 15_ABASTO                 🚌  59min
- 17:37 27_EL RETIRO              🚌  63min
- 17:39 215B_EL PATO              📅  65min
- 17:50 16_P MOR-167 Y 521        🚌  76min
- 17:52 81_EL PELIGRO             📅  78min
- 18:02 84_COLONIA URQUIZA-ESC 49 🚌  88min
- 18:03 215C_LA PLATA             🚌  89min
- 18:04 17_ROMERO                 🚌  90min
- 18:20 26_HERNANDEZ              🚌 106min
- 18:27 215C_EL PATO              🚌 113min
- 18:31 11X44_ETCHEVERRY          🚌 117min
+ 16:48 16_SANTA ANA              🚌   0min
+ 16:48 14_ABASTO                 🚌   0min
+ 16:48 16_SANTA ANA              🚌   0min
+ 16:49 215B_LP-P MOR-40 Y 115    🚌   1min
+ 16:55 23_HERNANDEZ              🚌   7min
+ 16:56 17_179 Y 38               🚌   8min
+ 16:57 10_OLMOS                  🚌   9min
+ 17:04 11_ETCHEVERRY             🚌  16min
+ 17:04 215A_EL PATO              🚌  16min
+ 17:04 23_HERNANDEZ              🚌  16min
+ 17:10 10_OLMOS                  🚌  22min
+ 17:14 215A_LA PLATA             🚌  26min
+ 17:16 11_ETCHEVERRY             🚌  28min
+ 17:21 26_HERNANDEZ              🚌  33min
+ 17:28 14_ABASTO                 🚌  40min
+ 17:36 15_ABASTO                 🚌  48min
+ 17:36 27_EL RETIRO              🚌  48min
+ 17:38 17_ROMERO                 📅  50min
+ 17:40 215B_EL PATO              📅  52min
+ 17:45 15_ABASTO                 🚌  57min
+ 17:50 16_P MOR-167 Y 521        🚌  62min
+ 17:52 81_EL PELIGRO             📅  64min
+ 18:03 215C_LA PLATA             🚌  75min
+ 18:04 17_ROMERO                 🚌  76min
+ 18:14 84_COLONIA URQUIZA-ESC 49 🚌  86min
+ 18:21 26_HERNANDEZ              🚌  93min
+ 18:27 215C_EL PATO              🚌  99min
+ 18:32 11X44_ETCHEVERRY          🚌 104min
