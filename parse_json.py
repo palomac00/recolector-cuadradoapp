@@ -39,7 +39,14 @@ def parse_arrivals(json_file):
 def load_existing_arrivals(filename):
     """Cargar arrivals existentes del Excel"""
     try:
-        df = pd.read_excel(filename)
+        df = pd.read_excel(filename, sheet_name="TODOS")
+        # Renombrar columnas para que coincidan
+        df = df.rename(columns={
+            'ETA': 'hora_eta',
+            'BANDERA': 'bandera',
+            'MIN': 'minutos_restantes',
+            'ESTADO': 'status'
+        })
         return df.to_dict('records')
     except FileNotFoundError:
         return []
