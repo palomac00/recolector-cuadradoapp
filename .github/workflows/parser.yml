@@ -21,7 +21,7 @@ jobs:
 
     - name: Fetch JSON real desde Cuadrado  ← ← ← NUEVO PASO AQUÍ
       run: |
-        curl -s "https://cuadrado.com.ar/api/arribos?linea=141&parada=LP1912" > input.json
+        curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22LP1912%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > input.json
     
     - name: Crear data/
       run: mkdir -p data
