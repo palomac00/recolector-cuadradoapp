@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas openpyxl requests jq
+        pip install pandas openpyxl requests
 
     - name: Crear data/
       run: mkdir -p data
@@ -30,17 +30,10 @@ jobs:
     - name: Fetch 3 paradas Cuadrado API
       run: |
         echo "📡 Descargando horarios reales..."
-        
-        # LP1912 (principal - ~28 buses)
         curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22LP1912%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > lp1912.json
-        
-        # L6173 (secundaria - 2 buses 215)
         curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22L6173%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > l6173.json
-        
-        # L6203 (tercera - 1 bus 215C)
         curl -s "https://cuadrado.com.ar/api/get-parada?query=%7B%22id%22%3A%22L6203%22%2C%22lineas%22%3A%5B%7B%22codigo%22%3A141%2C%22empresa%22%3A%229DJ%22%7D%5D%7D" > l6203.json
         
-        # Combinar TODOS los JSONs
         python -c "
 import json
 files = ['lp1912.json', 'l6173.json', 'l6203.json']
@@ -49,22 +42,10 @@ for f in files:
     try:
         data = json.load(open(f))
         all_arribos.extend(data['arribos'])
-        print(f'✅ {f}: {len(data[\"arribos\"])} buses')
-    except:
-        print(f'⚠️  {f}: vacío')
-
-# Eliminar duplicados (mismo tiempo + bandera)
-unique = []
-seen = set()
-for a in sorted(all_arribos, key=lambda x: x['tiempo']):
-    key = (a['tiempo'], a['bandera'])
-    if key not in seen:
-        seen.add(key)
-        unique.append(a)
-
-combined = {'arribos': unique}
-json.dump(combined, open('input.json', 'w'), indent=2)
-print(f'✅ TOTAL: {len(unique)} horarios únicos de 3 paradas')
+    except: pass
+all_arribos.sort(key=lambda x: x['tiempo'])
+json.dump({'arribos': all_arribos}, open('input.json', 'w'))
+print(f'✅ {len(all_arribos)} horarios combinados')
 "
 
     - name: Parsear JSON → Excel + TXT
