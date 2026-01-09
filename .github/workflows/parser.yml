@@ -29,10 +29,17 @@ jobs:
 
       - name: Fetch Cuadrado API data
         run: |
-          curl -s "https://cuadradoapp.com/api/linea/1912/parada/3" > lp1912.json
-          curl -s "https://cuadradoapp.com/api/linea/6173/parada/3" > l6173.json
-          curl -s "https://cuadradoapp.com/api/linea/6203/parada/3" > l6203.json
-          echo '✅ Downloaded files successfully'
+          # Build the query JSON and URL-encode it
+          QUERY1='{"id":"LP1912","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
+          QUERY2='{"id":"L6173","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
+          QUERY3='{"id":"L6203","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
+          
+          curl -s "https://cuadrado.com.ar/api/get-parada?query=$(echo -n "$QUERY1" | jq -sRr @uri)" > lp1912.json
+          curl -s "https://cuadrado.com.ar/api/get-parada?query=$(echo -n "$QUERY2" | jq -sRr @uri)" > l6173.json
+          curl -s "https://cuadrado.com.ar/api/get-parada?query=$(echo -n "$QUERY3" | jq -sRr @uri)" > l6203.json
+          
+          echo "✅ Files downloaded:"
+          ls -lh *.json
 
       - name: Merge JSON files
         run: |
@@ -42,13 +49,18 @@ jobs:
           all_arribos = []
           for f in files:
               try:
-                  data = json.load(open(f))
-                  all_arribos.extend(data['arribos'])
-              except:
-                  pass
+                  with open(f, 'r') as file:
+                      data = json.load(file)
+                      if 'arribos' in data:
+                          all_arribos.extend(data['arribos'])
+                      print(f"✅ {f}: {len(data.get('arribos', []))} arribos")
+              except Exception as e:
+                  print(f"⚠️ {f}: {e}")
+          
           all_arribos.sort(key=lambda x: x['tiempo'])
-          json.dump({'arribos': all_arribos}, open('input.json', 'w'))
-          print(f"✅ {len(all_arribos)} horarios combinados")
+          with open('input.json', 'w') as f:
+              json.dump({'arribos': all_arribos}, f)
+          print(f"✅ {len(all_arribos)} horarios combinados totales")
           EOF
           python3 merge.py
 
