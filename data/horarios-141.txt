@@ -1,4 +1,4 @@
-HORARIOS LÍNEA 141 - 09/01 21:43
+HORARIOS LÍNEA 141 - 09/01 21:47
 ============================================================
 
 🚐 215A/B/C (TUS FAVORITOS)
@@ -15,6 +15,7 @@ HORARIOS LÍNEA 141 - 09/01 21:43
 📋 TODOS LOS BUSES (orden ETA)
 ----------------------------------------
  18:30 11X44_ETCHEVERRY          🚌   0min
+ 18:47 14X44_ABASTO              🚌   0min
  18:31 15_ABASTO                 🚌   1min
  18:35 23_HERNANDEZ              🚌   5min
  18:40 14_ABASTO                 📅  10min
