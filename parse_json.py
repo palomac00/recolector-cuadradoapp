@@ -84,14 +84,18 @@ def create_excel_3_sheets(arrivals):
     df_combined = pd.DataFrame(arrivals).sort_values('minutos_restantes')
     format_sheet(ws3, df_combined)
     
-    filename = "data/horarios-141.xlsx"
+    fecha = datetime.now().strftime("%Y-%m-%d")
+filename = f"data/horarios-141-{fecha}.xlsx"
+
     wb.save(filename)
     print(f"✅ Excel guardado: {filename} ({len(arrivals)} buses)")
 
 def create_txt(arrivals):
     """TXT legible para Notion/sync"""
     Path("data").mkdir(exist_ok=True)
-    with open("data/horarios-141.txt", "w", encoding="utf-8") as f:
+fecha = datetime.now().strftime("%Y-%m-%d")
+with open(f"data/horarios-141-{fecha}.txt", "w", encoding="utf-8") as f:
+
         f.write(f"HORARIOS LÍNEA 141 - {datetime.now().strftime('%d/%m %H:%M')}\n")
         f.write("=" * 60 + "\n\n")
         
