@@ -16,6 +16,7 @@ def parse_arrivals(json_file):
     arrivals = []
     tz_ar = pytz.timezone('America/Argentina/Buenos_Aires')
     now = datetime.now(tz_ar)
+    hora_scraping = now.strftime("%H:%M")
     
     for arrival in data['arribos']:
         minutos = arrival['tiempo']
@@ -27,6 +28,7 @@ def parse_arrivals(json_file):
         hora_eta = eta.strftime("%H:%M")
         
         arrivals.append({
+            'hora_scraping': hora_scraping,
             'hora_eta': hora_eta,
             'bandera': bandera,
             'minutos_restantes': minutos,
