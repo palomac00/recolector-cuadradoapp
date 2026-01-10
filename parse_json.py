@@ -5,8 +5,14 @@ import pandas as pd
 from datetime import datetime, timedelta
 import pytz
 from pathlib import Path
-from openpyxl import Workbook, load_workbook
+from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
+
+TZ_AR = pytz.timezone('America/Argentina/Buenos_Aires')
+
+def get_fecha_excel():
+    """Nombre del Excel de HOY: horarios-141-YYYY-MM-DD.xlsx"""
+    return f"data/horarios-141-{datetime.now(TZ_AR).strftime('%Y-%m-%d')}.xlsx"
 
 def parse_arrivals(json_file):
     """Parse Cuadrado API JSON → lista de arrivals"""
@@ -14,159 +20,102 @@ def parse_arrivals(json_file):
         data = json.load(f)
     
     arrivals = []
-    tz_ar = pytz.timezone('America/Argentina/Buenos_Aires')
-    now = datetime.now(tz_ar)
-    hora_scraping = now.strftime("%H:%M")
+    now = datetime.now(TZ_AR)
+    hora_scraping = now.strftime("%H:%M:%S")
     
     for arrival in data['arribos']:
         minutos = arrival['tiempo']
         bandera = arrival['bandera']
         programado = "📅" if arrival['programado'] else "🚌"
-        gps = arrival.get('coordsCoche', None)
         
         eta = now + timedelta(minutes=minutos)
         hora_eta = eta.strftime("%H:%M")
         
         arrivals.append({
-            'hora_scraping': hora_scraping,
-            'hora_eta': hora_eta,
-            'bandera': bandera,
-            'minutos_restantes': minutos,
-            'status': programado,
-            'gps': gps
+            'Hora_Scrap': hora_scraping,
+            'Hora_Llegada': hora_eta,
+            'Bandera': bandera,
+            'Minutos': minutos,
+            'Estado': programado
         })
     
     return arrivals
 
-def load_existing_arrivals(filename):
-    """Cargar arrivals existentes del Excel"""
-    try:
-        df = pd.read_excel(filename, sheet_name="TODOS")
-        # Renombrar columnas para que coincidan
-        column_mapping = {
-            'SCRAPING': 'hora_scraping',
-            'ETA': 'hora_eta',
-            'BANDERA': 'bandera',
-            'MIN': 'minutos_restantes',
-            'ESTADO': 'status'
+def cargar_excel_dia():
+    """Carga el Excel de HOY o retorna DataFrames vacíos"""
+    archivo_hoy = get_fecha_excel()
+    Path("data").mkdir(exist_ok=True)
+    
+    if not os.path.exists(archivo_hoy):
+        return {
+            'TODOS': pd.DataFrame(),
+            '215': pd.DataFrame(),
+            'COMBINADAS': pd.DataFrame()
         }
-        df = df.rename(columns=column_mapping)
+    
+    try:
+        excel_file = pd.ExcelFile(archivo_hoy)
+        datos = {}
         
-        # Asegurar que todas las columnas existan
-        for col in ['hora_scraping', 'hora_eta', 'bandera', 'minutos_restantes', 'status']:
-            if col not in df.columns:
-                df[col] = ''
+        for sheet in ['TODOS', '215', 'COMBINADAS']:
+            if sheet in excel_file.sheet_names:
+                df = pd.read_excel(archivo_hoy, sheet_name=sheet, skiprows=1)
+                datos[sheet] = df
+            else:
+                datos[sheet] = pd.DataFrame()
         
-        # Convertir a diccionarios, reemplazando NaN con strings vacíos
-        records = df[['hora_scraping', 'hora_eta', 'bandera', 'minutos_restantes', 'status']].fillna('').to_dict('records')
-        return records
-    except (FileNotFoundError, KeyError):
-        return []
+        return datos
+    except Exception as e:
+        print(f"⚠️ Error cargando {archivo_hoy}: {e}")
+        return {
+            'TODOS': pd.DataFrame(),
+            '215': pd.DataFrame(),
+            'COMBINADAS': pd.DataFrame()
+        }
 
-def merge_arrivals(new_arrivals, existing_arrivals):
-    """Combinar arrivals nuevos con existentes, evitando duplicados"""
-    # Crear set de keys existentes (bandera + eta)
-    existing_keys = set()
-    for arr in existing_arrivals:
-        key = (arr['bandera'], arr['hora_eta'])
-        existing_keys.add(key)
-    
-    merged = existing_arrivals.copy()
-    
-    # Agregar solo los nuevos que no están duplicados
-    for arr in new_arrivals:
-        key = (arr['bandera'], arr['hora_eta'])
-        if key not in existing_keys:
-            merged.append(arr)
-            existing_keys.add(key)
-    
-    # Ordenar por minutos restantes
-    merged.sort(key=lambda x: x['minutos_restantes'])
-    return merged
-
-def create_excel_3_sheets(arrivals, filename):
-    """Crear Excel con 3 hojas"""
-    Path("data").mkdir(exist_ok=True)
-    wb = Workbook()
-    wb.remove(wb.active)
-    
-    # Headers
-    headers = ["SCRAPING", "ETA", "BANDERA", "MIN", "ESTADO"]
-    header_fill = PatternFill(start_color="3673A5", end_color="3673A5", fill_type="solid")
-    header_font = Font(bold=True, color="FFFFFF")
-    
-    def format_sheet(ws, dataframe):
-        """Write headers and data to worksheet"""
-        for col_idx, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_idx)
-            cell.value = header
-            cell.fill = header_fill
-            cell.font = header_font
-        
-        for row_idx, row in enumerate(dataframe.itertuples(index=False), 2):
-            scraping = getattr(row, 'hora_scraping', '')
-            eta = getattr(row, 'hora_eta', '')
-            bandera = getattr(row, 'bandera', '')
-            minutos = getattr(row, 'minutos_restantes', '')
-            status = getattr(row, 'status', '')
-            
-            ws.cell(row=row_idx, column=1, value=scraping)
-            ws.cell(row=row_idx, column=2, value=eta)
-            ws.cell(row=row_idx, column=3, value=bandera)
-            ws.cell(row=row_idx, column=4, value=minutos)
-            ws.cell(row=row_idx, column=5, value=status)
-        
-        ws.column_dimensions['A'].width = 10
-        ws.column_dimensions['B'].width = 8
-        ws.column_dimensions['C'].width = 25
-        ws.column_dimensions['D'].width = 6
-        ws.column_dimensions['E'].width = 8
-    
-    # Sheet 1: TODOS
-    ws1 = wb.create_sheet("TODOS")
-    df_all = pd.DataFrame(arrivals)
-    format_sheet(ws1, df_all)
-    
-    # Sheet 2: SOLO 215
-    ws2 = wb.create_sheet("215")
-    df_215 = pd.DataFrame([a for a in arrivals if '215' in a['bandera']])
-    if not df_215.empty:
-        format_sheet(ws2, df_215)
-    else:
-        ws2.cell(row=1, column=1, value="SIN DATOS")
-    
-    # Sheet 3: COMBINADAS (ordenadas por tiempo)
-    ws3 = wb.create_sheet("COMBINADAS")
-    df_combined = pd.DataFrame(arrivals).sort_values('minutos_restantes')
-    format_sheet(ws3, df_combined)
-    
-    wb.save(filename)
-    print(f"✅ Excel guardado: {filename} ({len(arrivals)} buses acumulados)")
-
-def create_txt(arrivals):
-    """TXT legible para Notion/sync"""
+def guardar_excel_dia(horarios_nuevos):
+    """Actualiza SOLO el Excel de HOY - SIN DUPLICADOS"""
+    datos_existentes = cargar_excel_dia()
+    ahora = datetime.now(TZ_AR)
+    archivo_hoy = get_fecha_excel()
     Path("data").mkdir(exist_ok=True)
     
-    with open("data/horarios-141.txt", "w", encoding="utf-8") as f:
-        f.write(f"HORARIOS LÍNEA 141 - {datetime.now().strftime('%d/%m %H:%M')}\n")
-        f.write("=" * 60 + "\n\n")
-        
-        # Primero los 215
-        buses_215 = [a for a in arrivals if '215' in a['bandera']]
-        if buses_215:
-            f.write("🚐 215A/B/C (TUS FAVORITOS)\n")
-            f.write("-" * 40 + "\n")
-            for bus in buses_215:
-                f.write(f"{bus['hora_eta']:>6} {bus['bandera']:<25} {bus['status']} {bus['minutos_restantes']:>3}min\n")
-            f.write("\n")
-        
-        # Todos ordenados
-        f.write("📋 TODOS LOS BUSES (orden ETA)\n")
-        f.write("-" * 40 + "\n")
-        for bus in sorted(arrivals, key=lambda x: x['minutos_restantes']):
-            f.write(f"{bus['hora_eta']:>6} {bus['bandera']:<25} {bus['status']} {bus['minutos_restantes']:>3}min\n")
+    # TODOS
+    df_nuevos = pd.DataFrame(horarios_nuevos)
+    df_todos = pd.concat([datos_existentes['TODOS'], df_nuevos], ignore_index=True)
+    df_todos = df_todos.drop_duplicates(subset=['Hora_Llegada', 'Bandera']).reset_index(drop=True)
+    df_todos = df_todos.sort_values('Minutos')
     
-    print("✅ TXT guardado: data/horarios-141.txt")
+    # 215
+    nuevos_215 = [h for h in horarios_nuevos if '215' in h.get('Bandera', '')]
+    df_nuevos_215 = pd.DataFrame(nuevos_215)
+    df_215 = pd.concat([datos_existentes['215'], df_nuevos_215], ignore_index=True)
+    df_215 = df_215.drop_duplicates(subset=['Hora_Llegada', 'Bandera']).reset_index(drop=True)
+    df_215 = df_215.sort_values('Minutos')
+    
+    # COMBINADAS (todos ordenados por minutos)
+    df_combinadas = df_todos.copy()
+    
+    with pd.ExcelWriter(archivo_hoy, engine='openpyxl') as writer:
+        df_todos.to_excel(writer, sheet_name='TODOS', index=False, startrow=1)
+        df_215.to_excel(writer, sheet_name='215', index=False, startrow=1)
+        df_combinadas.to_excel(writer, sheet_name='COMBINADAS', index=False, startrow=1)
+        
+        sheets_info = {
+            'TODOS': df_todos,
+            '215': df_215,
+            'COMBINADAS': df_combinadas
+        }
+        
+        for sheet_name, df in sheets_info.items():
+            ws = writer.sheets[sheet_name]
+            ws['A1'] = f'LÍNEA 141 - {sheet_name} - {ahora.strftime("%d/%m/%Y %H:%M:%S")}'
+            ws['A1'].font = Font(bold=True)
+
+    print(f"💾 Excel actualizado: {archivo_hoy}")
+    print(f"   TODOS: {len(df_todos)} filas únicas")
+    print(f"   215: {len(df_215)} filas únicas")
+    print(f"   COMBINADAS: {len(df_combinadas)} filas únicas")
 
 def main():
     if len(sys.argv) != 2:
@@ -174,27 +123,14 @@ def main():
         sys.exit(1)
     
     json_file = sys.argv[1]
-    new_arrivals = parse_arrivals(json_file)
+    arrivals = parse_arrivals(json_file)
     
-    # Generar nombre del archivo del día
-    fecha = datetime.now(pytz.timezone('America/Argentina/Buenos_Aires')).strftime("%Y-%m-%d")
-    excel_filename = f"data/horarios-141-{fecha}.xlsx"
+    print(f"📊 {len(arrivals)} horarios parseados")
+    print(f"🚐 {len([a for a in arrivals if '215' in a['Bandera']])} buses 215 encontrados")
     
-    # Cargar arrivals existentes del día
-    existing_arrivals = load_existing_arrivals(excel_filename)
+    guardar_excel_dia(arrivals)
     
-    # Combinar sin duplicados
-    all_arrivals = merge_arrivals(new_arrivals, existing_arrivals)
-    
-    print(f"📊 {len(new_arrivals)} horarios nuevos parseados")
-    print(f"📊 {len(existing_arrivals)} horarios anteriores")
-    print(f"📊 {len(all_arrivals)} horarios totales (sin duplicados)")
-    print(f"🚐 {len([a for a in all_arrivals if '215' in a['bandera']])} buses 215 encontrados")
-    
-    create_excel_3_sheets(all_arrivals, excel_filename)
-    create_txt(all_arrivals)
-    
-    print("🎉 Recolector COMPLETO: Excel acumulativo + TXT cada 10min")
+    print("🎉 Recolector COMPLETO: Excel acumulativo cada 10min")
 
 if __name__ == "__main__":
     main()
