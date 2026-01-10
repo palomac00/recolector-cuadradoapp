@@ -26,7 +26,7 @@ def parse_arrivals(json_file):
     for arrival in data['arribos']:
         minutos = arrival['tiempo']
         bandera = arrival['bandera']
-        parada = arrival.get('parada', 'LP1912')  # Ahora viene del merge.py
+        parada = arrival.get('parada')  # Ahora viene del merge.py
         
         eta = now + timedelta(minutes=minutos)
         hora_eta = eta.strftime("%H:%M")
