@@ -35,7 +35,8 @@ def parse_arrivals(json_file):
             'Hora_Scrap': hora_scraping,
             'Hora_Llegada': hora_eta,
             'Linea': bandera,
-            'Minutos': minutos
+            'Minutos': minutos,
+            'Parada': 'LP1912'  # Por defecto
         })
     
     return arrivals
@@ -60,7 +61,7 @@ def cargar_excel_dia():
             if sheet in excel_file.sheet_names:
                 # Leer desde fila 5 (headers en fila 5, datos desde fila 6)
                 df = pd.read_excel(archivo_hoy, sheet_name=sheet, skiprows=4)
-                columnas_validas = ['Hora_Scrap', 'Hora_Llegada', 'Linea', 'Minutos']
+                columnas_validas = ['Hora_Scrap', 'Hora_Llegada', 'Linea', 'Minutos', 'Parada']
                 df = df[[col for col in columnas_validas if col in df.columns]]
                 datos[sheet] = df.dropna(how='all')
             else:
