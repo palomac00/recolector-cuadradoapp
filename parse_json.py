@@ -44,27 +44,40 @@ def load_existing_arrivals(filename):
         df = pd.read_excel(filename, sheet_name="TODOS")
         # Renombrar columnas para que coincidan
         df = df.rename(columns={
+            'SCRAPING': 'hora_scraping',
             'ETA': 'hora_eta',
             'BANDERA': 'bandera',
             'MIN': 'minutos_restantes',
             'ESTADO': 'status'
         })
-        return df.to_dict('records')
-    except FileNotFoundError:
+        # Asegurar que existan las columnas necesarias
+        for col in ['hora_scraping', 'hora_eta', 'bandera', 'minutos_restantes', 'status']:
+            if col not in df.columns:
+                df[col] = None
+        return df[['hora_scraping', 'hora_eta', 'bandera', 'minutos_restantes', 'status']].to_dict('records')
+    except (FileNotFoundError, KeyError):
         return []
 
 def merge_arrivals(new_arrivals, existing_arrivals):
     """Combinar arrivals nuevos con existentes, evitando duplicados"""
-    # Crear set de identificadores únicos para evitar duplicados
-    existing_keys = set()
+    # Crear diccionario de arrivals existentes por bandera
+    existing_dict = {}
     for arr in existing_arrivals:
-        key = (arr['hora_eta'], arr['bandera'])
-        existing_keys.add(key)
+        key = arr['bandera']
+        if key not in existing_dict:
+            existing_dict[key] = arr
     
-    merged = existing_arrivals.copy()
+    merged = []
+    added_bandera = set()
+    
+    # Agregar todos los nuevos arrivals
     for arr in new_arrivals:
-        key = (arr['hora_eta'], arr['bandera'])
-        if key not in existing_keys:
+        merged.append(arr)
+        added_bandera.add(arr['bandera'])
+    
+    # Agregar arrivals existentes que no están en los nuevos
+    for arr in existing_arrivals:
+        if arr['bandera'] not in added_bandera:
             merged.append(arr)
     
     # Ordenar por minutos restantes
@@ -78,7 +91,7 @@ def create_excel_3_sheets(arrivals, filename):
     wb.remove(wb.active)
     
     # Headers
-    headers = ["ETA", "BANDERA", "MIN", "ESTADO"]
+    headers = ["SCRAPING", "ETA", "BANDERA", "MIN", "ESTADO"]
     header_fill = PatternFill(start_color="3673A5", end_color="3673A5", fill_type="solid")
     header_font = Font(bold=True, color="FFFFFF")
     
@@ -91,15 +104,17 @@ def create_excel_3_sheets(arrivals, filename):
             cell.font = header_font
         
         for row_idx, row in enumerate(dataframe.itertuples(index=False), 2):
-            ws.cell(row=row_idx, column=1, value=row.hora_eta)
-            ws.cell(row=row_idx, column=2, value=row.bandera)
-            ws.cell(row=row_idx, column=3, value=row.minutos_restantes)
-            ws.cell(row=row_idx, column=4, value=row.status)
+            ws.cell(row=row_idx, column=1, value=row.hora_scraping)
+            ws.cell(row=row_idx, column=2, value=row.hora_eta)
+            ws.cell(row=row_idx, column=3, value=row.bandera)
+            ws.cell(row=row_idx, column=4, value=row.minutos_restantes)
+            ws.cell(row=row_idx, column=5, value=row.status)
         
-        ws.column_dimensions['A'].width = 8
-        ws.column_dimensions['B'].width = 25
-        ws.column_dimensions['C'].width = 6
-        ws.column_dimensions['D'].width = 8
+        ws.column_dimensions['A'].width = 10
+        ws.column_dimensions['B'].width = 8
+        ws.column_dimensions['C'].width = 25
+        ws.column_dimensions['D'].width = 6
+        ws.column_dimensions['E'].width = 8
     
     # Sheet 1: TODOS
     ws1 = wb.create_sheet("TODOS")
