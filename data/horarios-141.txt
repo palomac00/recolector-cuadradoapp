@@ -1,4 +1,4 @@
-HORARIOS LÍNEA 141 - 09/01 23:58
+HORARIOS LÍNEA 141 - 10/01 00:41
 ============================================================
 
 🚐 215A/B/C (TUS FAVORITOS)
@@ -8,12 +8,14 @@ HORARIOS LÍNEA 141 - 09/01 23:58
  18:58 215A_EL PATO              📅  28min
  19:12 215B_LP-P MOR-1 Y 57      🚌  29min
  19:10 215B_LP-P MOR-1 Y 57      🚌  40min
+ 22:23 215B_LP-P MOR-40 Y 115    🚌  42min
  21:28 215C_LA PLATA             🚌  44min
  20:24 215A_EL PATO              📅  48min
  21:46 215A_EL PATO              📅  62min
  19:40 215C_EL PATO              🚌  70min
  22:04 215A_LA PLATA             📅  80min
  19:54 215C_LA PLATA             🚌  84min
+ 23:08 215A_LA PLATA             📅  87min
  21:08 215B_EL PATO              🚌  92min
  22:20 215B_LP-P MOR-40 Y 115    🚌  96min
  22:05 215A_LA PLATA             📅  98min
@@ -23,6 +25,7 @@ HORARIOS LÍNEA 141 - 09/01 23:58
  21:47 215A_EL PATO              📅 114min
  22:38 215A_EL PATO              🚌 114min
  20:39 215A_LA PLATA             📅 116min
+ 23:39 215_ALUAR                 🚌 118min
 
 📋 TODOS LOS BUSES (orden ETA)
 ----------------------------------------
@@ -57,6 +60,7 @@ HORARIOS LÍNEA 141 - 09/01 23:58
  21:22 10_OLMOS                  📅  24min
  20:01 14_ABASTO                 📅  25min
  20:52 15_ABASTO                 📅  25min
+ 22:06 16_SANTA ANA              🚌  25min
  18:56 10_OLMOS                  🚌  26min
  20:53 23_HERNANDEZ              🚌  26min
  19:10 14_ABASTO                 🚌  27min
@@ -79,10 +83,14 @@ HORARIOS LÍNEA 141 - 09/01 23:58
  19:10 16_P MOR-SANTA ANA        🚌  40min
  19:10 215B_LP-P MOR-1 Y 57      🚌  40min
  19:12 10_OLMOS                  🚌  42min
+ 22:23 215B_LP-P MOR-40 Y 115    🚌  42min
  21:28 16_SANTA ANA              🚌  44min
  21:28 215C_LA PLATA             🚌  44min
  19:28 15_ABASTO                 🚌  45min
+ 22:26 16_SANTA ANA              🚌  45min
  19:17 27_EL RETIRO              🚌  47min
+ 22:28 10_OLMOS                  🚌  47min
+ 22:28 84_COLONIA URQUIZA-ESC 49 🚌  47min
  20:24 215A_EL PATO              📅  48min
  21:32 23_HERNANDEZ              🚌  48min
  21:46 16_SANTA ANA              🚌  48min
@@ -108,14 +116,18 @@ HORARIOS LÍNEA 141 - 09/01 23:58
  22:04 215A_LA PLATA             📅  80min
  19:51 81_EL PELIGRO             🚌  81min
  20:57 27_EL RETIRO              🚌  81min
+ 23:03 17_ROMERO                 🚌  82min
  22:07 11_ETCHEVERRY             🚌  83min
  19:54 215C_LA PLATA             🚌  84min
  22:22 23_HERNANDEZ              🚌  84min
  21:53 10_OLMOS                  🚌  86min
+ 23:08 14X44_ABASTO              🚌  87min
+ 23:08 215A_LA PLATA             📅  87min
  21:04 84_COLONIA URQUIZA-ESC 49 🚌  88min
  19:59 17_ROMERO                 📅  89min
  21:23 10_OLMOS                  🚌  90min
  21:23 15_ABASTO                 🚌  90min
+ 23:12 23_HERNANDEZ              🚌  91min
  21:08 215B_EL PATO              🚌  92min
  22:20 26_HERNANDEZ              🚌  96min
  22:20 215B_LP-P MOR-40 Y 115    🚌  96min
@@ -140,3 +152,4 @@ HORARIOS LÍNEA 141 - 09/01 23:58
  22:52 14_ABASTO                 🚌 114min
  20:39 215A_LA PLATA             📅 116min
  20:56 27_EL RETIRO              🚌 116min
+ 23:39 215_ALUAR                 🚌 118min
