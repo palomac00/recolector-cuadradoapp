@@ -43,18 +43,23 @@ def load_existing_arrivals(filename):
     try:
         df = pd.read_excel(filename, sheet_name="TODOS")
         # Renombrar columnas para que coincidan
-        df = df.rename(columns={
+        column_mapping = {
             'SCRAPING': 'hora_scraping',
             'ETA': 'hora_eta',
             'BANDERA': 'bandera',
             'MIN': 'minutos_restantes',
             'ESTADO': 'status'
-        })
-        # Asegurar que existan las columnas necesarias
+        }
+        df = df.rename(columns=column_mapping)
+        
+        # Asegurar que todas las columnas existan
         for col in ['hora_scraping', 'hora_eta', 'bandera', 'minutos_restantes', 'status']:
             if col not in df.columns:
-                df[col] = None
-        return df[['hora_scraping', 'hora_eta', 'bandera', 'minutos_restantes', 'status']].to_dict('records')
+                df[col] = ''
+        
+        # Convertir a diccionarios, reemplazando NaN con strings vacíos
+        records = df[['hora_scraping', 'hora_eta', 'bandera', 'minutos_restantes', 'status']].fillna('').to_dict('records')
+        return records
     except (FileNotFoundError, KeyError):
         return []
 
@@ -104,11 +109,17 @@ def create_excel_3_sheets(arrivals, filename):
             cell.font = header_font
         
         for row_idx, row in enumerate(dataframe.itertuples(index=False), 2):
-            ws.cell(row=row_idx, column=1, value=row.hora_scraping)
-            ws.cell(row=row_idx, column=2, value=row.hora_eta)
-            ws.cell(row=row_idx, column=3, value=row.bandera)
-            ws.cell(row=row_idx, column=4, value=row.minutos_restantes)
-            ws.cell(row=row_idx, column=5, value=row.status)
+            scraping = getattr(row, 'hora_scraping', '')
+            eta = getattr(row, 'hora_eta', '')
+            bandera = getattr(row, 'bandera', '')
+            minutos = getattr(row, 'minutos_restantes', '')
+            status = getattr(row, 'status', '')
+            
+            ws.cell(row=row_idx, column=1, value=scraping)
+            ws.cell(row=row_idx, column=2, value=eta)
+            ws.cell(row=row_idx, column=3, value=bandera)
+            ws.cell(row=row_idx, column=4, value=minutos)
+            ws.cell(row=row_idx, column=5, value=status)
         
         ws.column_dimensions['A'].width = 10
         ws.column_dimensions['B'].width = 8
