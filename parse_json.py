@@ -114,6 +114,10 @@ def guardar_excel_dia(horarios_nuevos):
     else:
         df_215 = datos_existentes['LP1912-215']
     
+    # Filtrar solo 215 de LP1912
+    if not df_215.empty:
+        df_215 = df_215[(df_215['Parada'] == 'LP1912') & (df_215['Linea'].str.contains('215', na=False))]
+    
     df_215 = df_215.sort_values('Hora_Llegada').reset_index(drop=True)
     
     # 6203-6173 (L6203 + L6173)
