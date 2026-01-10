@@ -65,25 +65,20 @@ def load_existing_arrivals(filename):
 
 def merge_arrivals(new_arrivals, existing_arrivals):
     """Combinar arrivals nuevos con existentes, evitando duplicados"""
-    # Crear diccionario de arrivals existentes por bandera
-    existing_dict = {}
+    # Crear set de keys existentes (bandera + eta)
+    existing_keys = set()
     for arr in existing_arrivals:
-        key = arr['bandera']
-        if key not in existing_dict:
-            existing_dict[key] = arr
+        key = (arr['bandera'], arr['hora_eta'])
+        existing_keys.add(key)
     
-    merged = []
-    added_bandera = set()
+    merged = existing_arrivals.copy()
     
-    # Agregar todos los nuevos arrivals
+    # Agregar solo los nuevos que no están duplicados
     for arr in new_arrivals:
-        merged.append(arr)
-        added_bandera.add(arr['bandera'])
-    
-    # Agregar arrivals existentes que no están en los nuevos
-    for arr in existing_arrivals:
-        if arr['bandera'] not in added_bandera:
+        key = (arr['bandera'], arr['hora_eta'])
+        if key not in existing_keys:
             merged.append(arr)
+            existing_keys.add(key)
     
     # Ordenar por minutos restantes
     merged.sort(key=lambda x: x['minutos_restantes'])
