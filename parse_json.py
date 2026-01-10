@@ -62,7 +62,17 @@ def cargar_excel_dia():
                 df = pd.read_excel(archivo_hoy, sheet_name=sheet, skiprows=4)
                 columnas_validas = ['Hora_Scrap', 'Hora_Llegada', 'Linea', 'Minutos', 'Parada']
                 df = df[[col for col in columnas_validas if col in df.columns]]
-                datos[sheet] = df.dropna(how='all')
+                df = df.dropna(how='all')
+                
+                # Filtrar por parada según el sheet
+                if sheet == 'LP1912':
+                    df = df[df['Parada'] == 'LP1912']
+                elif sheet == 'LP1912-215':
+                    df = df[df['Parada'] == 'LP1912']
+                elif sheet == '6203-6173':
+                    df = df[df['Parada'].isin(['L6173', 'L6203'])]
+                
+                datos[sheet] = df
             else:
                 datos[sheet] = pd.DataFrame()
         
