@@ -1,21 +1,22 @@
-name: Recolector Línea 141 (3 paradas)
+name: 🚌 Recolector Línea 141 (Cuadrado)
 
 on:
   schedule:
     - cron: '*/10 * * * *'  # Cada 10 minutos
-  workflow_dispatch:  # Botón manual
+  workflow_dispatch:        # Botón MANUAL
 
 jobs:
-  parse:
+  recolectar:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -24,12 +25,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas openpyxl requests pytz
 
-      - name: Crear data/
+      - name: Create data/ directory
         run: mkdir -p data
 
       - name: Fetch Cuadrado API data
         run: |
-          # Build the query JSON and URL-encode it
+          # Build and execute queries for 3 paradas
           QUERY1='{"id":"LP1912","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
           QUERY2='{"id":"L6173","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
           QUERY3='{"id":"L6203","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
@@ -38,7 +39,7 @@ jobs:
           curl -s "https://cuadrado.com.ar/api/get-parada?query=$(echo -n "$QUERY2" | jq -sRr @uri)" > l6173.json
           curl -s "https://cuadrado.com.ar/api/get-parada?query=$(echo -n "$QUERY3" | jq -sRr @uri)" > l6203.json
           
-          echo "✅ Files downloaded:"
+          echo "✅ API data fetched"
           ls -lh *.json
 
       - name: Merge JSON files
@@ -60,15 +61,18 @@ jobs:
           all_arribos.sort(key=lambda x: x['tiempo'])
           with open('input.json', 'w') as f:
               json.dump({'arribos': all_arribos}, f)
-          print(f"✅ {len(all_arribos)} horarios combinados totales")
+          print(f"✅ {len(all_arribos)} total horarios merged")
           EOF
           python3 merge.py
 
-      - name: Parsear JSON → Excel + TXT
-        run: python parse_json.py input.json
+      - name: Parse JSON → Excel + TXT
+        run: |
+          python parse_json.py input.json
+          echo "✅ Parse completado"
+          ls -lh data/
 
-      - name: Commit results
+      - name: Auto commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: '📊 Arribos 141 actualizados - ${{ github.run_number }}'
-          file_pattern: data/*
+          commit_message: "📊 Horarios actualizados Línea 141 - ${{ github.run_number }}"
+          file_pattern: 'data/*'
