@@ -91,7 +91,7 @@ def guardar_excel_dia(horarios_nuevos):
     else:
         df_lp1912 = df_nuevos
     
-    df_lp1912 = df_lp1912.sort_values('Minutos').reset_index(drop=True)
+    df_lp1912 = df_lp1912.sort_values('Hora_Llegada').reset_index(drop=True)
     
     # LP1912-215
     nuevos_215 = [h for h in horarios_nuevos if '215' in h.get('Linea', '')]
@@ -105,7 +105,7 @@ def guardar_excel_dia(horarios_nuevos):
     else:
         df_215 = datos_existentes['LP1912-215']
     
-    df_215 = df_215.sort_values('Minutos').reset_index(drop=True)
+    df_215 = df_215.sort_values('Hora_Llegada').reset_index(drop=True)
     
     # 6203-6173
     df_6203_6173 = df_lp1912.copy()
