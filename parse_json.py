@@ -68,7 +68,7 @@ def cargar_excel_dia():
                 if sheet == 'LP1912':
                     df = df[df['Parada'] == 'LP1912']
                 elif sheet == 'LP1912-215':
-                    df = df[df['Parada'] == 'LP1912']
+                    df = df[(df['Parada'] == 'LP1912') & (df['Linea'].str.contains('215', na=False))]
                 elif sheet == '6203-6173':
                     df = df[df['Parada'].isin(['L6173', 'L6203'])]
                 
@@ -113,10 +113,6 @@ def guardar_excel_dia(horarios_nuevos):
             df_215 = df_nuevos_215
     else:
         df_215 = datos_existentes['LP1912-215']
-    
-    # Filtrar solo 215 de LP1912
-    if not df_215.empty:
-        df_215 = df_215[(df_215['Parada'] == 'LP1912') & (df_215['Linea'].str.contains('215', na=False))]
     
     df_215 = df_215.sort_values('Hora_Llegada').reset_index(drop=True)
     
