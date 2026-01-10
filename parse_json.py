@@ -60,7 +60,7 @@ def cargar_excel_dia():
         
         for sheet in ['TODOS', '215', 'COMBINADAS']:
             if sheet in excel_file.sheet_names:
-                df = pd.read_excel(archivo_hoy, sheet_name=sheet, skiprows=1)
+                df = pd.read_excel(archivo_hoy, sheet_name=sheet)
                 datos[sheet] = df
             else:
                 datos[sheet] = pd.DataFrame()
@@ -98,20 +98,10 @@ def guardar_excel_dia(horarios_nuevos):
     df_combinadas = df_todos.copy()
     
     with pd.ExcelWriter(archivo_hoy, engine='openpyxl') as writer:
-        df_todos.to_excel(writer, sheet_name='TODOS', index=False, startrow=1)
-        df_215.to_excel(writer, sheet_name='215', index=False, startrow=1)
-        df_combinadas.to_excel(writer, sheet_name='COMBINADAS', index=False, startrow=1)
-        
-        sheets_info = {
-            'TODOS': df_todos,
-            '215': df_215,
-            'COMBINADAS': df_combinadas
-        }
-        
-        for sheet_name, df in sheets_info.items():
-            ws = writer.sheets[sheet_name]
-            ws['A1'] = f'LÍNEA 141 - {sheet_name} - {ahora.strftime("%d/%m/%Y %H:%M:%S")}'
-            ws['A1'].font = Font(bold=True)
+        # Escribir datos sin startrow (desde fila 1)
+        df_todos.to_excel(writer, sheet_name='TODOS', index=False)
+        df_215.to_excel(writer, sheet_name='215', index=False)
+        df_combinadas.to_excel(writer, sheet_name='COMBINADAS', index=False)
 
     print(f"💾 Excel actualizado: {archivo_hoy}")
     print(f"   TODOS: {len(df_todos)} filas únicas")
