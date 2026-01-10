@@ -11,41 +11,57 @@ from openpyxl.styles import Font
 TZ_AR = pytz.timezone('America/Argentina/Buenos_Aires')
 
 def get_fecha_excel():
+    """Nombre del Excel de HOY: horarios-141-YYYY-MM-DD.xlsx"""
     return f"data/horarios-141-{datetime.now(TZ_AR).strftime('%Y-%m-%d')}.xlsx"
+
+def cargar_excel_dia():
+    """Carga el Excel de HOY o retorna DataFrames vacíos"""
+    archivo_hoy = get_fecha_excel()
+    Path("data").mkdir(exist_ok=True)
+    
+    if not os.path.exists(archivo_hoy):
+        return {
+            'LP1912': pd.DataFrame(),
+            'LP1912-215': pd.DataFrame(),
+            '6203-6173': pd.DataFrame()
+        }
+    
+    try:
+        excel_file = pd.ExcelFile(archivo_hoy)
+        datos = {}
+        
+        for sheet in ['LP1912', 'LP1912-215', '6203-6173']:
+            if sheet in excel_file.sheet_names:
+                df = pd.read_excel(archivo_hoy, sheet_name=sheet, skiprows=4)
+                columnas_validas = ['Hora_Scrap', 'Hora_Llegada', 'Linea', 'Minutos', 'Parada']
+                df = df[[col for col in columnas_validas if col in df.columns]]
+                df = df.dropna(how='all')
+                datos[sheet] = df
+            else:
+                datos[sheet] = pd.DataFrame()
+        
+        return datos
+    except Exception as e:
+        print(f"⚠️ Error cargando {archivo_hoy}: {e}")
+        return {
+            'LP1912': pd.DataFrame(),
+            'LP1912-215': pd.DataFrame(),
+            '6203-6173': pd.DataFrame()
+        }
 
 def parse_arrivals(json_file):
     """Parse Cuadrado API JSON → lista de arrivals"""
     with open(json_file, 'r') as f:
         data = json.load(f)
     
-    print("🔍 DEBUG JSON entrada:")
-    print(f"Total arribos: {len(data['arribos'])}")
-    
     arrivals = []
     now = datetime.now(TZ_AR)
     hora_scraping = now.strftime("%H:%M:%S")
     
-    # DEBUG: Verificar campo 'parada'
-    for i, arrival in enumerate(data['arribos'][:5]):  # Primeros 5
-        parada = arrival.get('parada', 'SIN_PARADA')
-        bandera = arrival.get('bandera', 'SIN_BANDE')
-        print(f"  Arribo {i}: parada='{parada}' bandera='{bandera}'")
-    
     for arrival in data['arribos']:
         minutos = arrival['tiempo']
         bandera = arrival['bandera']
-        parada_raw = arrival.get('parada')  # ← VERIFICAMOS AQUÍ
-        
-        # DEBUG: Contar 215 por parada
-        if '215' in str(bandera):
-            print(f"🚐 215 detectado: parada='{parada_raw}' bandera='{bandera}'")
-        
-        # SI NO tiene parada, usar nombre del archivo como fallback
-        if parada_raw is None:
-            print("❌ ERROR: input.json sin campo 'parada'!")
-            parada = 'UNKNOWN'
-        else:
-            parada = parada_raw
+        parada = arrival['parada']  # ← Campo del merge
         
         eta = now + timedelta(minutes=minutos)
         hora_eta = eta.strftime("%H:%M")
@@ -61,52 +77,85 @@ def parse_arrivals(json_file):
     return arrivals
 
 def guardar_excel_dia(horarios_nuevos):
-    """FILTRADO estrictamente por parada"""
+    """ACUMULA horarios del día COMPLETO - SIN duplicados"""
+    datos_existentes = cargar_excel_dia()
+    ahora = datetime.now(TZ_AR)
     archivo_hoy = get_fecha_excel()
     Path("data").mkdir(exist_ok=True)
     
-    # DEBUG: Contar por parada y línea
-    print("\n🔍 DEBUG FILTRADO:")
-    lp1912_total = [h for h in horarios_nuevos if h['Parada'] == 'LP1912']
-    lp1912_215 = [h for h in horarios_nuevos if h['Parada'] == 'LP1912' and '215' in str(h['Linea'])]
-    todas_paradas = set(h['Parada'] for h in horarios_nuevos)
+    # LP1912 - TODOS los buses de parada LP1912
+    df_nuevos_lp = pd.DataFrame([h for h in horarios_nuevos if h['Parada'] == 'LP1912'])
+    if not datos_existentes['LP1912'].empty:
+        df_lp1912 = pd.concat([datos_existentes['LP1912'], df_nuevos_lp], ignore_index=True)
+        df_lp1912 = df_lp1912.drop_duplicates(subset=['Hora_Llegada', 'Linea']).reset_index(drop=True)
+    else:
+        df_lp1912 = df_nuevos_lp
     
-    print(f"Paradas encontradas: {todas_paradas}")
-    print(f"LP1912 total: {len(lp1912_total)} buses")
-    print(f"LP1912 SOLO 215: {len(lp1912_215)} buses")
+    df_lp1912 = df_lp1912.sort_values('Hora_Llegada').reset_index(drop=True)
     
-    # FILTRADO FINAL
-    df_lp1912 = pd.DataFrame(lp1912_total).drop_duplicates(subset=['Hora_Llegada', 'Linea'])
-    df_215 = pd.DataFrame(lp1912_215).drop_duplicates(subset=['Hora_Llegada', 'Linea'])
-    df_otras = pd.DataFrame([h for h in horarios_nuevos if h['Parada'] in ['L6173', 'L6203']])
+    # LP1912-215 - SOLO 215 de parada LP1912 (ACUMULADO)
+    nuevos_215_lp = [h for h in horarios_nuevos if h['Parada'] == 'LP1912' and '215' in str(h['Linea'])]
+    df_nuevos_215 = pd.DataFrame(nuevos_215_lp)
     
-    print(f"FINAL - LP1912-215: {len(df_215)} filas")
+    if not datos_existentes['LP1912-215'].empty:
+        df_215 = pd.concat([datos_existentes['LP1912-215'], df_nuevos_215], ignore_index=True)
+        df_215 = df_215.drop_duplicates(subset=['Hora_Llegada', 'Linea']).reset_index(drop=True)
+    else:
+        df_215 = df_nuevos_215
     
-    ahora = datetime.now(TZ_AR)
+    df_215 = df_215.sort_values('Hora_Llegada').reset_index(drop=True)
+    
+    # 6203-6173 - L6173 + L6203 (ACUMULADO)
+    df_nuevos_comb = pd.DataFrame([h for h in horarios_nuevos if h['Parada'] in ['L6173', 'L6203']])
+    if not datos_existentes['6203-6173'].empty:
+        df_6203_6173 = pd.concat([datos_existentes['6203-6173'], df_nuevos_comb], ignore_index=True)
+        df_6203_6173 = df_6203_6173.drop_duplicates(subset=['Hora_Llegada', 'Linea', 'Parada']).reset_index(drop=True)
+    else:
+        df_6203_6173 = df_nuevos_comb
+    
+    df_6203_6173 = df_6203_6173.sort_values('Hora_Llegada').reset_index(drop=True)
+    
+    # ESCRIBIR Excel acumulativo
     with pd.ExcelWriter(archivo_hoy, engine='openpyxl') as writer:
         df_lp1912.to_excel(writer, sheet_name='LP1912', index=False, startrow=4)
         df_215.to_excel(writer, sheet_name='LP1912-215', index=False, startrow=4)
-        df_otras.to_excel(writer, sheet_name='6203-6173', index=False, startrow=4)
+        df_6203_6173.to_excel(writer, sheet_name='6203-6173', index=False, startrow=4)
         
-        for sheet_name, df, titulo in [
-            ('LP1912', df_lp1912, 'LP1912'),
-            ('LP1912-215', df_215, 'LP1912-215'), 
-            ('6203-6173', df_otras, '6203-6173')
-        ]:
+        # Headers
+        sheets_info = {
+            'LP1912': (df_lp1912, 'LP1912'),
+            'LP1912-215': (df_215, 'LP1912-215'),
+            '6203-6173': (df_6203_6173, '6203-6173')
+        }
+        
+        for sheet_name, (df, titulo) in sheets_info.items():
             ws = writer.sheets[sheet_name]
-            ws['A1'] = f'LÍNEA 141 - {titulo}'
-            ws['A2'] = f'{ahora.strftime("%d/%m %H:%M:%S")}'
-            ws['A3'] = f'Filas: {len(df)}'
-            for cell in ['A1', 'A2', 'A3']: 
-                ws[cell].font = Font(bold=True)
+            ws['A1'] = f'LÍNEA 141 - {titulo} - {ahora.strftime("%d/%m/%Y")}'
+            ws['A2'] = f'Última actualización: {ahora.strftime("%H:%M:%S")}'
+            ws['A3'] = f'Total filas: {len(df)}'
+            ws['A1'].font = Font(bold=True)
+            ws['A2'].font = Font(bold=True)
+            ws['A3'].font = Font(bold=True)
+
+    print(f"💾 Excel ACUMULADO del día:")
+    print(f"   LP1912: {len(df_lp1912)} filas totales")
+    print(f"   LP1912-215: {len(df_215)} buses 215 totales")
+    print(f"   6203-6173: {len(df_6203_6173)} filas totales")
 
 def main():
+    if len(sys.argv) != 2:
+        print("Usage: python parse_json.py input.json")
+        sys.exit(1)
+    
     json_file = sys.argv[1]
     arrivals = parse_arrivals(json_file)
     
-    print(f"\n📊 {len(arrivals)} total parseados")
+    print(f"📊 {len(arrivals)} horarios parseados esta ejecución")
+    print(f"🚐 {len([a for a in arrivals if '215' in a['Linea']])} buses 215 encontrados")
+    
     guardar_excel_dia(arrivals)
-    print("🎉 COMPLETO")
+    
+    print("🎉 ACUMULACIÓN DIARIA COMPLETA")
 
 if __name__ == "__main__":
     main()
