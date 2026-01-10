@@ -2,8 +2,8 @@ name: 🚌 Recolector Línea 141 (Cuadrado)
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Cada 10 minutos
-  workflow_dispatch:        # Botón MANUAL
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
 
 jobs:
   recolectar:
@@ -30,7 +30,6 @@ jobs:
 
       - name: Fetch Cuadrado API data
         run: |
-          # Build and execute queries for 3 paradas
           QUERY1='{"id":"LP1912","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
           QUERY2='{"id":"L6173","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
           QUERY3='{"id":"L6203","lineas":[{"codigo":141,"empresa":"9DJ"}]}'
@@ -43,45 +42,15 @@ jobs:
           ls -lh *.json
 
       - name: Merge JSON files
-  run: |
-    cat > merge.py << 'EOF'
-    import json
-    
-    paradas_map = {
-        'lp1912.json': 'LP1912',
-        'l6173.json': 'L6173',
-        'l6203.json': 'L6203'
-    }
-    
-    files = ['lp1912.json', 'l6173.json', 'l6203.json']
-    all_arribos = []
-    
-    for f in files:
-        try:
-            with open(f, 'r') as file:
-                data = json.load(file)
-                parada_name = paradas_map.get(f, 'UNKNOWN')
-                
-                if 'arribos' in data:
-                    for arribo in data['arribos']:
-                        arribo['parada'] = parada_name
-                        all_arribos.append(arribo)
-                    print(f"✅ {f}: {len(data.get('arribos', []))} arribos ({parada_name})")
-        except Exception as e:
-            print(f"⚠️ {f}: {e}")
-    
-    all_arribos.sort(key=lambda x: x['tiempo'])
-    
-    # DEBUG: mostrar primeros arribos
-    print("\n=== DEBUG: Primeros 3 arribos ===")
-    for arr in all_arribos[:3]:
-        print(f"Parada: {arr.get('parada')}, Bandera: {arr.get('bandera')}")
-    
-    with open('input.json', 'w') as f:
-        json.dump({'arribos': all_arribos}, f)
-    print(f"✅ {len(all_arribos)} total horarios merged")
-    EOF
-    python3 merge.py
+        run: |
+          python3 << 'PYEOF'
+          import json
+          
+          paradas_map = {
+              'lp1912.json': 'LP1912',
+              'l6173.json': 'L6173',
+              'l6203.json': 'L6203'
+          }
           
           files = ['lp1912.json', 'l6173.json', 'l6203.json']
           all_arribos = []
@@ -101,11 +70,15 @@ jobs:
                   print(f"⚠️ {f}: {e}")
           
           all_arribos.sort(key=lambda x: x['tiempo'])
+          
+          print("\n=== DEBUG: Primeros 3 arribos ===")
+          for arr in all_arribos[:3]:
+              print(f"Parada: {arr.get('parada')}, Bandera: {arr.get('bandera')}")
+          
           with open('input.json', 'w') as f:
               json.dump({'arribos': all_arribos}, f)
           print(f"✅ {len(all_arribos)} total horarios merged")
-          EOF
-          python3 merge.py
+          PYEOF
 
       - name: Parse JSON → Excel + TXT
         run: |
