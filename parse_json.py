@@ -85,6 +85,22 @@ def cargar_excel_dia():
             '6203-6173': pd.DataFrame()
         }
 
+def deduplicar_df(df, subset_cols):
+    """
+    Deduplica un DataFrame manteniéndose con el registro más reciente (último Hora_Scrap)
+    """
+    if df.empty:
+        return df
+    
+    # Ordena por Hora_Scrap descendente, luego deduplica por subset_cols (mantiene el primero, que es el más reciente)
+    df = df.sort_values('Hora_Scrap', ascending=False)
+    df = df.drop_duplicates(subset=subset_cols, keep='first').reset_index(drop=True)
+    
+    # Ordena por Hora_Llegada para presentación
+    df = df.sort_values('Hora_Llegada').reset_index(drop=True)
+    
+    return df
+
 def guardar_excel_dia(horarios_nuevos):
     """Actualiza SOLO el Excel de HOY - SIN DUPLICADOS"""
     datos_existentes = cargar_excel_dia()
@@ -96,42 +112,35 @@ def guardar_excel_dia(horarios_nuevos):
     df_nuevos_lp = pd.DataFrame([h for h in horarios_nuevos if h['Parada'] == 'LP1912'])
     if not datos_existentes['LP1912'].empty and not df_nuevos_lp.empty:
         df_lp1912 = pd.concat([datos_existentes['LP1912'], df_nuevos_lp], ignore_index=True)
-        df_lp1912 = df_lp1912.drop_duplicates(subset=['Hora_Llegada', 'Linea']).reset_index(drop=True)
     elif not df_nuevos_lp.empty:
         df_lp1912 = df_nuevos_lp
     else:
         df_lp1912 = datos_existentes['LP1912']
     
-    if not df_lp1912.empty:
-        df_lp1912 = df_lp1912.sort_values('Hora_Llegada').reset_index(drop=True)
+    df_lp1912 = deduplicar_df(df_lp1912, subset_cols=['Hora_Llegada', 'Linea', 'Parada'])
     
     # LP1912-215 (solo línea 215 de LP1912)
     nuevos_215 = [h for h in horarios_nuevos if h['Parada'] == 'LP1912' and '215' in h.get('Linea', '')]
-    if nuevos_215:
-        df_nuevos_215 = pd.DataFrame(nuevos_215)
-        if not datos_existentes['LP1912-215'].empty:
-            df_215 = pd.concat([datos_existentes['LP1912-215'], df_nuevos_215], ignore_index=True)
-            df_215 = df_215.drop_duplicates(subset=['Hora_Llegada', 'Linea']).reset_index(drop=True)
-        else:
-            df_215 = df_nuevos_215
+    df_nuevos_215 = pd.DataFrame(nuevos_215)
+    if not datos_existentes['LP1912-215'].empty and not df_nuevos_215.empty:
+        df_215 = pd.concat([datos_existentes['LP1912-215'], df_nuevos_215], ignore_index=True)
+    elif not df_nuevos_215.empty:
+        df_215 = df_nuevos_215
     else:
         df_215 = datos_existentes['LP1912-215']
     
-    if not df_215.empty:
-        df_215 = df_215.sort_values('Hora_Llegada').reset_index(drop=True)
+    df_215 = deduplicar_df(df_215, subset_cols=['Hora_Llegada', 'Linea', 'Parada'])
     
     # 6203-6173 (L6203 + L6173)
     df_nuevos_comb = pd.DataFrame([h for h in horarios_nuevos if h['Parada'] in ['L6173', 'L6203']])
     if not datos_existentes['6203-6173'].empty and not df_nuevos_comb.empty:
         df_6203_6173 = pd.concat([datos_existentes['6203-6173'], df_nuevos_comb], ignore_index=True)
-        df_6203_6173 = df_6203_6173.drop_duplicates(subset=['Hora_Llegada', 'Linea', 'Parada']).reset_index(drop=True)
     elif not df_nuevos_comb.empty:
         df_6203_6173 = df_nuevos_comb
     else:
         df_6203_6173 = datos_existentes['6203-6173']
     
-    if not df_6203_6173.empty:
-        df_6203_6173 = df_6203_6173.sort_values('Hora_Llegada').reset_index(drop=True)
+    df_6203_6173 = deduplicar_df(df_6203_6173, subset_cols=['Hora_Llegada', 'Linea', 'Parada'])
     
     with pd.ExcelWriter(archivo_hoy, engine='openpyxl') as writer:
         df_lp1912.to_excel(writer, sheet_name='LP1912', index=False, startrow=4)
